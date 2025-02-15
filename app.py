@@ -12,6 +12,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
+import torch
+torch.hub.set_dir('/tmp')
 
 # Load the trained model
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
