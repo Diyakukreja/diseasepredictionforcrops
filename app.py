@@ -51,10 +51,9 @@ class_names = [
     'maize ear rot', 'maize fall armyworm', 'maize stem borer', 'pink bollworm in cotton', 
     'red cotton bug', 'thirps on cotton'
 ]
-
 @app.route('/')
-def index():
-    return "Flask server is running. Use /predict for predictions."
+def home():
+    return "Flask app is running!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -79,5 +78,6 @@ def predict():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))  # Ensure compatibility with Render
+    app.run(host='0.0.0.0', port=port)
