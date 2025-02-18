@@ -11,7 +11,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": ["http://localhost:5173", "https://diseasepredictionforcrops.onrender.com"]}})
+
 import torch
 torch.hub.set_dir('/tmp')
 
@@ -57,16 +58,27 @@ class_names = [
 def home():
     return "Flask app is running!"
 
+
 @app.route('/predict', methods=['POST'])
 def predict():
+    # CORS headers
+    response = jsonify({'error': 'Unknown error'})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+
+    # File validation
     if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
+        response = jsonify({'error': 'No file part'})
+        return response, 400
     
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
+        response = jsonify({'error': 'No selected file'})
+        return response, 400
 
     try:
+        # Process image and predict
         img = Image.open(file.stream).convert('RGB')
         img = transform(img).unsqueeze(0).to(device)
 
@@ -75,10 +87,13 @@ def predict():
             _, predicted_class = torch.max(output, 1)
             predicted_class_name = class_names[predicted_class.item()]
 
-        return jsonify({'disease': predicted_class_name}), 200
+        response = jsonify({'disease': predicted_class_name})
+        return response, 200
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        response = jsonify({'error': str(e)})
+        return response, 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))  # Ensure compatibility with Render
