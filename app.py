@@ -11,7 +11,10 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": ["http://localhost:5173", "https://diseasepredictionforcrops.onrender.com"]}})
+allowed_origins = ["http://localhost:5173", "https://diseasepredictionforcrops.onrender.com"]
+
+CORS(app, resources={r"/*": {"origins": allowed_origins}}, supports_credentials=True)
+
 
 import torch
 torch.hub.set_dir('/tmp')
@@ -54,6 +57,17 @@ class_names = [
     'maize ear rot', 'maize fall armyworm', 'maize stem borer', 'pink bollworm in cotton', 
     'red cotton bug', 'thirps on cotton'
 ]
+
+@app.before_request
+def handle_preflight():
+    if request.method == 'OPTIONS':
+        response = jsonify({'message': 'Preflight check'})
+        response.headers.add('Access-Control-Allow-Origin', ', '.join(allowed_origins))
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        return response
+
+
 @app.route('/')
 def home():
     return "Flask app is running!"
